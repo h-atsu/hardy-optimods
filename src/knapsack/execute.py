@@ -1,8 +1,7 @@
-from config_schema import ConfigData
+from dataclass_schema import ConfigData, OutputData
 from knapsack.evaluater import evaluate
 from knapsack.make_input import make_input_data
 from knapsack.models.model_factory import model_name2model_class
-from knapsack.schema import OutputData
 
 
 def execute(config_data: ConfigData) -> OutputData:
@@ -12,10 +11,10 @@ def execute(config_data: ConfigData) -> OutputData:
     # モデルの作成と求解
     model_class = model_name2model_class[config_data.model_name]
     model = model_class(input_data, config_data)
-    solution = model.solve()
-
+    status = model.solve()
+    solution = model.get_solution()
     # 評価
-    output_data = evaluate(solution, input_data)
+    output_data = evaluate(solution, status, input_data)
 
     return output_data
 

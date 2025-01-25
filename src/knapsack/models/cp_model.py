@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 
-from config_schema import ConfigData
+from consts import SolutionStatus
+from dataclass_schema import ConfigData
 from knapsack.schema import InputData, SolutionData
 from solver_base import SolverBase
 
@@ -11,15 +12,19 @@ class CPModel(SolverBase):
         self.config_data = config_data
         self.model = cp_model.CpModel()
         self.solver = cp_model.CpSolver()
+        self._x = None
+        self._status = None
 
-    def solve(self) -> SolutionData:
+    def solve(self) -> SolutionStatus:
         # 変数の定義
-        x = [self.model.NewBoolVar(f"x_{i}") for i in range(self.input_data.n_items)]
+        self._x = [
+            self.model.NewBoolVar(f"x_{i}") for i in range(self.input_data.n_items)
+        ]
 
         # 容量制約
         self.model.Add(
             sum(
-                x[i] * self.input_data.weights[i]
+                self._x[i] * self.input_data.weights[i]
                 for i in range(self.input_data.n_items)
             )
             <= self.input_data.capacity
@@ -28,7 +33,8 @@ class CPModel(SolverBase):
         # 目的関数：選択した荷物の価値の合計を最大化
         self.model.Maximize(
             sum(
-                x[i] * self.input_data.values[i] for i in range(self.input_data.n_items)
+                self._x[i] * self.input_data.values[i]
+                for i in range(self.input_data.n_items)
             )
         )
 
@@ -36,12 +42,20 @@ class CPModel(SolverBase):
         self.solver.parameters.max_time_in_seconds = self.config_data.timelimit
         self.solver.parameters.log_search_progress = True
         status = self.solver.Solve(self.model)
+        self._status = status
 
-        # 解の取得
+        if status == cp_model.OPTIMAL:
+            return SolutionStatus.OPTIMAL
+        elif status == cp_model.FEASIBLE:
+            return SolutionStatus.FEASIBLE
+        else:
+            return SolutionStatus.UNKNOWN
+
+    def get_solution(self) -> SolutionData:
         selected_items = []
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+        if self._status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
             for i in range(self.input_data.n_items):
-                if self.solver.Value(x[i]) == 1:
+                if self.solver.Value(self._x[i]) == 1:
                     selected_items.append(i)
 
         return SolutionData(selected_items=selected_items)

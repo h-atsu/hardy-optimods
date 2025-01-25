@@ -5,6 +5,20 @@ from pydantic import BaseModel
 from consts import ROOT
 
 
+class BaseInputData(BaseModel):
+    pass
+
+
+class BaseSolutionData(BaseModel):
+    pass
+
+
+class OutputData(BaseModel):
+    objective_value: int
+    status: str
+    solution: BaseSolutionData
+
+
 class ConfigData(BaseModel):
     problem_name: str
     instance_file_name: str
