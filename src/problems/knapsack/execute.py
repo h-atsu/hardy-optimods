@@ -1,7 +1,7 @@
 from dataclass_schema import ConfigData, OutputData
-from knapsack.evaluater import evaluate
-from knapsack.make_input import make_input_data
-from knapsack.models.model_factory import model_name2model_class
+from problems.knapsack.evaluater import evaluate
+from problems.knapsack.make_input import make_input_data
+from problems.knapsack.models.model_factory import model_name2model_class
 
 
 def execute(config_data: ConfigData) -> OutputData:

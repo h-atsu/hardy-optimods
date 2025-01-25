@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel
 
-from consts import ROOT
+from consts import ROOT, SolutionStatus
 
 
 class BaseInputData(BaseModel):
@@ -14,16 +14,16 @@ class BaseSolutionData(BaseModel):
 
 
 class OutputData(BaseModel):
-    objective_value: int
-    status: str
-    solution: BaseSolutionData
+    objective_value: float
+    status: SolutionStatus
+    solution: BaseSolutionData | None
 
 
 class ConfigData(BaseModel):
     problem_name: str
     instance_file_name: str
     model_name: str
-    num_threads: int
+    num_threads: int = -1
     timelimit: Annotated[int, "seconds"]
 
     @property
