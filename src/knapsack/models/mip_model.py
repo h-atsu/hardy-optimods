@@ -1,12 +1,14 @@
-from mip import BINARY, Model, OptimizationStatus, xsum
+from mip import BINARY, Model, OptimizationStatus, maximize, xsum
 
+from config_schema import ConfigData
 from knapsack.schema import InputData, SolutionData
 from solver_base import SolverBase
 
 
 class MIPModel(SolverBase):
-    def __init__(self, input_data: InputData):
+    def __init__(self, input_data: InputData, config_data: ConfigData):
         self.input_data = input_data
+        self.config_data = config_data
         self.model = Model()
 
     def solve(self) -> SolutionData:
@@ -26,13 +28,16 @@ class MIPModel(SolverBase):
         )
 
         # 目的関数：選択した荷物の価値の合計を最大化
-        self.model.objective = xsum(
-            x[i] * self.input_data.values[i] for i in range(self.input_data.n_items)
+        self.model.objective = maximize(
+            xsum(
+                x[i] * self.input_data.values[i] for i in range(self.input_data.n_items)
+            )
         )
-        self.model.sense = "MAX"
 
         # 求解
-        status = self.model.optimize()
+        status = self.model.optimize(
+            max_seconds=self.config_data.timelimit,
+        )
 
         # 解の取得
         selected_items = []

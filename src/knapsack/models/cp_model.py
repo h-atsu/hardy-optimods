@@ -1,12 +1,14 @@
 from ortools.sat.python import cp_model
 
+from config_schema import ConfigData
 from knapsack.schema import InputData, SolutionData
 from solver_base import SolverBase
 
 
 class CPModel(SolverBase):
-    def __init__(self, input_data: InputData):
+    def __init__(self, input_data: InputData, config_data: ConfigData):
         self.input_data = input_data
+        self.config_data = config_data
         self.model = cp_model.CpModel()
         self.solver = cp_model.CpSolver()
 
@@ -31,6 +33,8 @@ class CPModel(SolverBase):
         )
 
         # 求解
+        self.solver.parameters.max_time_in_seconds = self.config_data.timelimit
+        self.solver.parameters.log_search_progress = True
         status = self.solver.Solve(self.model)
 
         # 解の取得

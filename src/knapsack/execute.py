@@ -1,14 +1,17 @@
+from config_schema import ConfigData
 from knapsack.evaluater import evaluate
 from knapsack.make_input import make_input_data
-from knapsack.models.mip_model import MIPModel
+from knapsack.models.model_factory import model_name2model_class
+from knapsack.schema import OutputData
 
 
-def execute(input_file_path: str):
+def execute(config_data: ConfigData) -> OutputData:
     # 入力データの読み込み
-    input_data = make_input_data(input_file_path)
+    input_data = make_input_data(config_data.instance_file_path)
 
     # モデルの作成と求解
-    model = MIPModel(input_data)
+    model_class = model_name2model_class[config_data.model_name]
+    model = model_class(input_data, config_data)
     solution = model.solve()
 
     # 評価
@@ -18,5 +21,5 @@ def execute(input_file_path: str):
 
 
 if __name__ == "__main__":
-    output_data = execute("data/knapsack/instances/instance_0.txt")
+    output_data = execute("data/knapsack/instances/instance_0.txt", timelimit=10)
     print(output_data)

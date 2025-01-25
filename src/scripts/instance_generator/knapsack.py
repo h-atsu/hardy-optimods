@@ -1,4 +1,3 @@
-import json
 import random
 from pathlib import Path
 from typing import Any
@@ -15,16 +14,18 @@ class KnapsackInstanceConfig(BaseModel):
         n_items: アイテムの数
         min_weight: アイテムの最小重量
         max_weight: アイテムの最大重量
-        min_value: アイテムの最小価値
-        max_value: アイテムの最大価値
+        base_value_ratio: 価値/重さの基本比率
+        value_noise_ratio: 価値のノイズ比率
+        special_item_ratio: 特殊アイテムの割合
         capacity_ratio: キャパシティを総重量に対する比率
     """
 
     n_items: int
     min_weight: int
     max_weight: int
-    min_value: int
-    max_value: int
+    base_value_ratio: float = 1.0  # 価値/重さの基本比率
+    value_noise_ratio: float = 0.2  # 価値のノイズ比率
+    special_item_ratio: float = 0.1  # 特殊アイテムの割合
     capacity_ratio: float
 
 
@@ -43,15 +44,53 @@ def generate_instance(
     """
     random.seed(seed)
 
-    weights = [
-        random.randint(config.min_weight, config.max_weight)
-        for _ in range(config.n_items)
-    ]
-    values = [
-        random.randint(config.min_value, config.max_value)
-        for _ in range(config.n_items)
-    ]
-    capacity = int(sum(weights) * config.capacity_ratio)
+    # 通常アイテムの生成（重さと価値に相関あり）
+    n_normal_items = int(config.n_items * (1 - config.special_item_ratio))
+    normal_items = []
+    for _ in range(n_normal_items):
+        weight = random.randint(config.min_weight, config.max_weight)
+        # 基本価値に対してノイズを加える
+        base_value = weight * config.base_value_ratio
+        noise = random.uniform(
+            -base_value * config.value_noise_ratio,
+            base_value * config.value_noise_ratio,
+        )
+        value = int(base_value + noise)
+        normal_items.append((weight, max(1, value)))  # 価値が0以下にならないように
+
+    # 特殊アイテムの生成
+    n_special_items = config.n_items - n_normal_items
+    special_items = []
+    for _ in range(n_special_items):
+        item_type = random.random()
+        if item_type < 0.4:  # 40%: 軽くて価値が高い
+            weight = random.randint(
+                config.min_weight, (config.min_weight + config.max_weight) // 3
+            )
+            value = random.randint(config.max_weight * 2, config.max_weight * 3)
+        elif item_type < 0.8:  # 40%: 重くて価値が高い
+            weight = random.randint(
+                (config.min_weight + config.max_weight * 2) // 3, config.max_weight
+            )
+            value = random.randint(config.max_weight * 3, config.max_weight * 4)
+        else:  # 20%: 中程度の重さで価値が非常に高い
+            weight = random.randint(
+                (config.min_weight + config.max_weight) // 3,
+                (config.min_weight + config.max_weight * 2) // 3,
+            )
+            value = random.randint(config.max_weight * 4, config.max_weight * 5)
+        special_items.append((weight, value))
+
+    # 全アイテムをシャッフル
+    all_items = normal_items + special_items
+    random.shuffle(all_items)
+
+    weights = [item[0] for item in all_items]
+    values = [item[1] for item in all_items]
+
+    # 容量を設定（総重量の一定割合）
+    total_weight = sum(weights)
+    capacity = int(total_weight * config.capacity_ratio)
 
     return {
         "N": config.n_items,
@@ -59,20 +98,6 @@ def generate_instance(
         "weights": weights,
         "values": values,
     }
-
-
-def write_instance(instance: dict[str, Any], output_dir: Path) -> None:
-    """インスタンスをJSONファイルとして保存
-
-    Args:
-        instance: 保存するインスタンス
-        output_dir: 出力ディレクトリのパス
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"instance_{instance['N']}.json"
-
-    with open(output_path, "w") as f:
-        json.dump(instance, f, indent=2)
 
 
 def generate_all_instances(
@@ -92,7 +117,14 @@ def generate_all_instances(
                 config=config,
                 seed=instance_no,
             )
-            write_instance(instance, output_dir)
+            output_path = output_dir / f"instance_{instance_no}.txt"
+
+            with open(output_path, "w") as f:
+                print(instance["N"], file=f)
+                print(instance["capacity"], file=f)
+                print(" ".join(map(str, instance["weights"])), file=f)
+                print(" ".join(map(str, instance["values"])), file=f)
+
             instance_no += 1
 
 
@@ -100,20 +132,22 @@ def main() -> None:
     """メイン処理"""
     configs = [
         KnapsackInstanceConfig(
-            n_items=50,
+            n_items=5000,
             min_weight=1,
             max_weight=100,
-            min_value=1,
-            max_value=100,
-            capacity_ratio=0.5,
+            base_value_ratio=2.0,
+            value_noise_ratio=0.3,
+            special_item_ratio=0.1,
+            capacity_ratio=0.3,
         ),
         KnapsackInstanceConfig(
-            n_items=100,
+            n_items=10000,
             min_weight=1,
             max_weight=100,
-            min_value=1,
-            max_value=100,
-            capacity_ratio=0.5,
+            base_value_ratio=2.0,
+            value_noise_ratio=0.3,
+            special_item_ratio=0.1,
+            capacity_ratio=0.3,
         ),
     ]
     n_instances_per_config = 5

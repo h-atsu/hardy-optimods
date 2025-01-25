@@ -1,4 +1,7 @@
-def evaluate(solution, input_data):
+from knapsack.schema import OutputData
+
+
+def evaluate(solution, input_data) -> OutputData:
     """
     ナップサック問題の解を評価する関数
 
