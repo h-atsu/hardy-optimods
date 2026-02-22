@@ -1,0 +1,30 @@
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "vscode",
+    "runServices": [
+        "vscode",
+        "redis",
+        "postgres"
+    ],
+    "workspaceFolder": "/workspace",
+    "postCreateCommand": "uv sync",
+    "forwardPorts": [
+        8000,
+        8001,
+        5555,
+        5432
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "ms-python.python",
+                "astral-sh.ty",
+                "openai.chatgpt",
+                "Codeium.codeium"
+            ]
+        }
+    },
+    "remoteUser": "vscode"
+}

@@ -1,0 +1,8 @@
+.md-grid {
+    max-width: initial;
+}
+
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
