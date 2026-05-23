@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    command: /bin/bash -lc "cd /workspace && uv sync && sleep infinity"
+    command: /bin/bash -lc "sleep infinity"
     environment:
       UV_PROJECT_ENVIRONMENT: /workspace/.venv
     ports:

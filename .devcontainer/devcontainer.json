@@ -8,7 +8,7 @@
         "postgres"
     ],
     "workspaceFolder": "/workspace",
-    "postCreateCommand": "uv sync",
+    "postCreateCommand": "uv sync && uv cache clean",
     "forwardPorts": [
         8000,
         8001,
@@ -22,7 +22,9 @@
                 "ms-python.python",
                 "astral-sh.ty",
                 "openai.chatgpt",
-                "Codeium.codeium"
+                "Codeium.codeium",
+                "Gruntfuggly.todo-tree",
+                "Anthropic.claude-code"
             ]
         }
     },
