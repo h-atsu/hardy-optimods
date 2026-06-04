@@ -1,1 +1,4 @@
-DATABASE_URL = "postgresql+psycopg://username:password@postgres:5432/default_database"
+import os
+
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./hardy_optimods.db")
