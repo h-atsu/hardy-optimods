@@ -4,7 +4,11 @@ from ui.api import DEFAULT_API_BASE_URL
 from ui.pages import bmi, task_status
 
 
-st.set_page_config(page_title="Hardy Optimods UI", page_icon=":material/functions:")
+st.set_page_config(
+    page_title="Hardy Optimods UI",
+    page_icon=":material/functions:",
+    layout="wide",
+)
 
 with st.sidebar:
     st.header("API")

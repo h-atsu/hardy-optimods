@@ -40,6 +40,11 @@ class TaskStatus(BaseModel):
     created_at: Optional[datetime] = None
 
 
+class DeletedTask(BaseModel):
+    id: str
+    deleted: bool
+
+
 def build_task_status(job: BmiJob) -> TaskStatus:
     result = celery.AsyncResult(job.id)
     return TaskStatus(
@@ -72,6 +77,26 @@ def list_bmi_jobs() -> list[TaskStatus]:
     with Session(engine) as session:
         jobs = session.exec(select(BmiJob).order_by(BmiJob.created_at.desc())).all()
         return [build_task_status(job) for job in jobs]
+
+
+@app.delete("/bmi/{task_id}", response_model=DeletedTask)
+def delete_bmi_job(task_id: str) -> DeletedTask:
+    with Session(engine) as session:
+        job = session.get(BmiJob, task_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        session.delete(job)
+        session.commit()
+
+    result = celery.AsyncResult(task_id)
+    try:
+        result.revoke(terminate=False)
+        result.forget()
+    except Exception:
+        pass
+
+    return DeletedTask(id=task_id, deleted=True)
 
 
 @app.get("/bmi/{task_id}", response_model=TaskStatus)

@@ -52,3 +52,7 @@ def fetch_bmi_task(base_url: str, task_id: str) -> dict[str, Any]:
 
 def fetch_bmi_tasks(base_url: str) -> list[dict[str, Any]]:
     return call_api("GET", "/bmi", base_url=base_url)
+
+
+def delete_bmi_task(base_url: str, task_id: str) -> dict[str, Any]:
+    return call_api("DELETE", f"/bmi/{task_id}", base_url=base_url)
