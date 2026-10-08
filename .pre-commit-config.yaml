@@ -11,3 +11,9 @@ repos:
         entry: uv run ty check . --ignore unresolved-import
         language: python
         types: [python]
+      - id: terraform-fmt
+        name: terraform fmt
+        entry: terraform fmt -check -recursive infra
+        language: system
+        files: ^infra/.*\.tf$
+        pass_filenames: false
