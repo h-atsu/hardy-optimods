@@ -1,0 +1,12 @@
+project_id = "your-gcp-project-id"
+
+# 必要に応じて上書きしてください。
+# region             = "asia-northeast1"
+# zone               = "asia-northeast1-b"
+# instance_name      = "hardy-optimods-sandbox"
+# machine_type       = "e2-medium"
+# boot_disk_size_gb  = 20
+# assign_external_ip = true
+# labels = {
+#   owner = "your-name"
+# }
