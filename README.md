@@ -2,43 +2,86 @@
 
 FastAPI + Celery + Redis based backend for optimization experiments.
 
-## 現在の構成（意図）
+## 現在の構成
 
-- `vscode`: 開発用コンテナ（FastAPI / Celery worker を手動起動）
+- `mise`: Python / uv / Redis と開発タスクを管理
+- `uv`: Python dependencies / virtualenv を管理
 - `redis`: Celery broker / backend
+- `sqlite`: API のデフォルト DB
 
-## devcontainer での動作確認手順
+Docker / devcontainer は使いません。
 
-1. devcontainer を起動し、`vscode` / `redis` が立ち上がることを確認する
-2. `vscode` コンテナ内で Celery worker を起動する
+## セットアップ
 
 ```bash
-uv run celery --app hardy_optimods.tasks:celery worker --loglevel=info
+mise install
+mise run sync
 ```
 
-3. 別ターミナルで Flower を起動する
+## 一括起動
+
+API / Celery worker / Redis / Flower / docs / Streamlit UI をまとめて起動します。
 
 ```bash
-uv run celery --app hardy_optimods.tasks:celery flower --port=5555
+mise run dev
+```
+
+起動後は以下で確認できます。
+
+- API: `http://127.0.0.1:8000`
+- Docs: `http://127.0.0.1:8001`
+- Flower: `http://127.0.0.1:5555`
+- UI: `http://127.0.0.1:8501`
+
+ログは `.local/logs` に出力されます。
+
+## 個別起動
+
+複数ターミナルで個別に起動する場合は、まず Redis を起動します。
+
+```bash
+mise run redis
+```
+
+別ターミナルで Celery worker を起動します。
+
+```bash
+mise run worker
+```
+
+別ターミナルで Flower を起動します。
+
+```bash
+mise run flower
 ```
 
 起動後は `http://127.0.0.1:5555` で確認できます。
 
-4. 別ターミナルで API を起動する
+別ターミナルで API を起動します。
 
 ```bash
-uv run uvicorn hardy_optimods.server:app --host 0.0.0.0 --port 8000 --reload
+mise run api
 ```
 
-5. 別ターミナルで Zensical のドキュメントサイトを起動する
+別ターミナルで Zensical のドキュメントサイトを起動します。
 
 ```bash
-uv run zensical serve -a 0.0.0.0:8001
+mise run docs
 ```
 
 起動後は `http://127.0.0.1:8001` で確認できます。
 
-6. ジョブ投入
+別ターミナルで Streamlit UI を起動します。
+
+```bash
+mise run ui
+```
+
+起動後は `http://127.0.0.1:8501` で確認できます。
+
+## 動作確認
+
+ジョブを投入します。
 
 ```bash
 curl -X POST http://127.0.0.1:8000/bmi \
@@ -52,7 +95,7 @@ curl -X POST http://127.0.0.1:8000/bmi \
 {"id":"<task_id>"}
 ```
 
-7. ステータス確認
+ステータスを確認します。
 
 ```bash
 curl http://127.0.0.1:8000/bmi/<task_id>

@@ -1,23 +1,17 @@
-from sqlmodel import SQLModel, Field, Session, create_engine, select
+import os
+
+from sqlmodel import SQLModel, Session, create_engine
 
 
-class TestTable(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    name: str
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./hardy_optimods.db")
+
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 
-engine = create_engine(
-    "postgresql+psycopg://username:password@postgres:5432/default_database",
-    echo=True,
-)
+def create_db_and_tables() -> None:
+    SQLModel.metadata.create_all(engine)
 
-# テーブル作成
-SQLModel.metadata.create_all(engine)
 
-# insert + select
-with Session(engine) as session:
-    session.add(TestTable(id=1, name="test"))
-    session.commit()
-
-    result = session.exec(select(TestTable)).all()
-    print(result)
+def get_session() -> Session:
+    return Session(engine)

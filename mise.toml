@@ -1,0 +1,75 @@
+[tools]
+uv = "latest"
+redis = "latest"
+
+[env]
+UV_PROJECT_ENVIRONMENT = ".venv"
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BACKEND_URL = "redis://127.0.0.1:6379/0"
+DATABASE_URL = "sqlite:///./hardy_optimods.db"
+STREAMLIT_BROWSER_GATHER_USAGE_STATS = "false"
+
+[tasks.sync]
+description = "Install Python dependencies into .venv"
+run = "uv sync"
+
+[tasks.redis]
+description = "Start the local Redis broker/backend"
+run = """
+mkdir -p .local/redis
+redis-server --dir .local/redis --save '' --appendonly no
+"""
+
+[tasks.worker]
+description = "Start the Celery worker"
+run = "uv run celery --app hardy_optimods.tasks:celery worker --loglevel=info"
+
+[tasks.flower]
+description = "Start Flower on http://127.0.0.1:5555"
+run = "uv run celery --app hardy_optimods.tasks:celery flower --address=127.0.0.1 --port=5555"
+
+[tasks.api]
+description = "Start the FastAPI server on http://127.0.0.1:8000"
+run = "uv run uvicorn hardy_optimods.server:app --host 0.0.0.0 --port 8000 --reload"
+
+[tasks.docs]
+description = "Start the docs site on http://127.0.0.1:8001"
+run = "uv run zensical serve -a 0.0.0.0:8001"
+
+[tasks.ui]
+description = "Start the Streamlit UI on http://127.0.0.1:8501"
+run = "uv run streamlit run src/ui/app.py --server.headless true --browser.gatherUsageStats false"
+
+[tasks.dev]
+description = "Start Redis, Celery, API, docs, Flower, and Streamlit without Docker"
+run = """
+set -e
+uv sync
+mkdir -p .local/redis .local/logs
+
+redis-server --dir .local/redis --save '' --appendonly no > .local/logs/redis.log 2>&1 &
+redis_pid=$!
+
+uv run celery --app hardy_optimods.tasks:celery worker --loglevel=info > .local/logs/worker.log 2>&1 &
+worker_pid=$!
+
+uv run celery --app hardy_optimods.tasks:celery flower --address=127.0.0.1 --port=5555 > .local/logs/flower.log 2>&1 &
+flower_pid=$!
+
+uv run uvicorn hardy_optimods.server:app --host 0.0.0.0 --port 8000 --reload > .local/logs/api.log 2>&1 &
+api_pid=$!
+
+uv run zensical serve -a 0.0.0.0:8001 > .local/logs/docs.log 2>&1 &
+docs_pid=$!
+
+uv run streamlit run src/ui/app.py --server.headless true --browser.gatherUsageStats false > .local/logs/ui.log 2>&1 &
+ui_pid=$!
+
+trap 'kill $redis_pid $worker_pid $flower_pid $api_pid $docs_pid $ui_pid 2>/dev/null' EXIT INT TERM
+echo "API:      http://127.0.0.1:8000"
+echo "Docs:     http://127.0.0.1:8001"
+echo "Flower:   http://127.0.0.1:5555"
+echo "UI:       http://127.0.0.1:8501"
+echo "Logs:     .local/logs"
+wait
+"""
